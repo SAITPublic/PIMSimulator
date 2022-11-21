@@ -1,0 +1,96 @@
+import os
+from os.path import join as joinpath
+
+
+def setNumJobs():
+    # to parallel build by default
+    SetOption('num_jobs', 32)
+    print("running with -j", GetOption('num_jobs'))
+
+
+def getFlags(env):
+    no_storage = ARGUMENTS.get('NO_STORAGE', 0)
+    if int(no_storage):
+        env.Append(CXXFLAGS=" -DNO_STORAGE")
+    return env
+
+
+def getSources(target):
+    en_emul = ARGUMENTS.get('NO_EMUL', 0)
+
+    if (target == "build"):
+        build_sources = (Glob(joinpath(base_path["build"], "*.cpp")) +
+                         Glob(joinpath(base_path["build"], "tests/*.cpp")))
+        if int(en_emul) != 1:
+            build_sources += Glob(joinpath(base_path["tools_build"], "*/*.cpp"))
+        sources = build_sources
+    elif (target == "lib"):
+        lib_sources = Glob(joinpath(base_path["build"], "*.cpp"))
+        lib_sources += Glob(joinpath(base_path["build"], "tests/PIMCmdGen.cpp"))
+        lib_sources += Glob(joinpath(base_path["build"], "tests/PIMKernel.cpp"))
+        lib_sources += Glob(joinpath(base_path["build"], "tests/KernelAddrGen.cpp"))
+        if int(en_emul) != 1:
+            lib_sources += Glob(joinpath(base_path["tools_build"], "emulator_api/*.cpp"))
+        sources = lib_sources
+    return sources
+
+
+def build(target_name, base_path, build_flags):
+    # setup the default build envronments
+    env = Environment()
+
+    env.Append(CXXFLAGS=build_flags["CXXFLAGS"] + build_flags["gprof_option"])
+    env.Append(LINKFLAGS=build_flags["LINKFLAGS"] + build_flags["gprof_option"])
+
+    # add flags
+    env = getFlags(env)
+
+    env.VariantDir(base_path["build"], base_path["source"], duplicate=0)
+    env.VariantDir(base_path["tools_build"], base_path["tools"], duplicate=0)
+    build_sources = getSources("build")
+    env.Program(target=target_name["binary"],
+                source=build_sources,
+                CPPPATH=[base_path["lib"], base_path["source"], base_path["tools"]],
+                LIBPATH=['.'], LIBS=['gtest', 'pthread'])
+
+    no_lib = ARGUMENTS.get('NO_LIBRARY', 0)
+    if int(no_lib) == 0:
+        lib_sources = getSources("lib")
+        # print ("Creating a static library from objects")
+        env.StaticLibrary(target=target_name["library"],
+                          source=lib_sources,
+                          CPPPATH=[base_path["lib"], base_path["source"], base_path["tools"]],
+                          LIBPATH=['.'],
+                          LIBS=['gtest', 'pthread'])
+        # print ("Creating a shared library from objects")
+        env.SharedLibrary(target=target_name["library"],
+                          source=lib_sources,
+                          CPPPATH=[base_path["lib"], base_path["source"], base_path["tools"]],
+                          LIBPATH=['.'],
+                          LIBS=['gtest', 'pthread'])
+
+
+root_path = Dir('.').abspath
+
+target_name = {
+    "binary": 'sim',
+    "library": './libdramsim/dramsim2',
+}
+
+base_path = {
+    "source": joinpath(root_path, 'src'),
+    "test": joinpath(root_path, 'src/tests'),
+    "build": joinpath(root_path, 'bin'),
+    "lib": joinpath(root_path, 'lib'),
+    "tools_build": joinpath(root_path, 'bin/tools'),
+    "tools": joinpath(root_path, 'tools'),
+}
+
+build_flags = {
+    "gprof_option": '',
+    "CXXFLAGS": '-g -O2 -std=c++14 -Wall -Wno-reorder -Wno-sign-compare',
+    "LINKFLAGS": '-g -O2 -std=c++14 -Wall -Wno-reorder -Wno-sign-compare',
+}
+
+setNumJobs()
+build(target_name, base_path, build_flags)
