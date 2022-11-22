@@ -9,10 +9,10 @@
 
 ## 1. Overview
 
-PIMSimulator is a a cycle accurate model that Single Instruction, Multiple Data (SIMD) execution units
+PIMSimulator is a cycle accurate model that Single Instruction, Multiple Data (SIMD) execution units
 that uses the bank-level parallelism in PIM Block to boost performance that would have otherwise used
 multiple times of bandwidth from simultaneous access of all bank.
-The simulator include  memory and have embedded within it a PIM block, which consist of programmable
+The simulator include memory and have embedded within it a PIM block, which consist of programmable
 command registers, general purpose register files and execution units.
 
 Based on https://github.com/umd-memsys/DRAMSim2, the simulator includes
@@ -26,7 +26,7 @@ Based on https://github.com/umd-memsys/DRAMSim2, the simulator includes
 
 ## 2. HW description
 
-PIM is a HBM stack that is pin compatilble with HBM2 and have embedded within it a PIM block, which consit
+PIM is a HBM stack that is pin compatible with HBM2 and have embedded within it a PIM block
 
 ### 2.1 Base Architecture
 
@@ -38,7 +38,7 @@ PIM is a HBM stack that is pin compatilble with HBM2 and have embedded within it
 |--------------|          |--------------|          |--------------|
 ```
 
-* Each channel is logically indepdent memory, so it has a dedicated independent controller.
+* Each channel is logically independent memory, so it has a dedicated independent controller.
 * (A): Read [Addr], Write [Addr]
 * (B): Activate, Read, Write, Precharge, Refresh, Activate_pim, ALU_pim, Precharge_pim, READ_pim
 
@@ -96,10 +96,10 @@ ADDRESS_MAPPING_SCHEME=Scheme8
 ### 2.3 PIM Instruction-Set Architecture
 |Type|Command|Description|Result (DST)|Operand (SRC0)|Operand (SRC1)|
 |---|---|---|---|---|---|
-|Arithmatic|ADD|addition |GRF|GRF, BANK, SRF|GRF, BANK, SRF|
-|Arithmatic|MUL|multiplication |GRF|GRF, BANK|GRF, BANK, SRF|
-|Arithmatic|MAC|multiply-accumulate |GRF_B|GRF, BANK|GRF, BANK, SRF|
-|Arithmatic|MAD|multiply-and-add |GRF|GRF, BANK|GRF, BANK, SRF|
+|Arithmetic|ADD|addition |GRF|GRF, BANK, SRF|GRF, BANK, SRF|
+|Arithmetic|MUL|multiplication |GRF|GRF, BANK|GRF, BANK, SRF|
+|Arithmetic|MAC|multiply-accumulate |GRF_B|GRF, BANK|GRF, BANK, SRF|
+|Arithmetic|MAD|multiply-and-add |GRF|GRF, BANK|GRF, BANK, SRF|
 |Data|MOV|load or store data from register to bank|GRF, SRF|GRF, BANK||
 |Data|FILL|copy data from bank to register|GRF, BANK|GRF, BANK||
 |Control|NOP|do nothing||||
@@ -112,7 +112,7 @@ ADDRESS_MAPPING_SCHEME=Scheme8
   * 2 Data transfer: MOV, FILL
   * 3 control flows: NOP, JUMP, EXIT
 * JUMP instruction
-  * Zero-cycle static branch: supports only a preprogrammed numbers of iterations
+  * Zero-cycle static branch: supports only a pre-programmed numbers of iterations
 * Operand type:
   * Vector Register (GRF_A, GRF_B)
   * Scalar Register (SRF)
@@ -215,7 +215,7 @@ scons NO_STORAGE=1
 ```
 
 ## 4 Programming Guide
-Highly recommend you to refer to `src/tests/*` (especily, `src/tests/PIMKernel.cpp` and `src/tests/PIMBenchTestCases.cpp`)
+Highly recommend you to refer to `src/tests/*` (especially, `src/tests/PIMKernel.cpp` and `src/tests/PIMBenchTestCases.cpp`)
 To attach to host simulator, refer to `src/tests/PIMKernel.cpp`.
 You can see commands that request memory transactions to the memory controller for GEMV or Eltwise operations on PIM.
 It include a basic PIM procedure for GEMV operation in the `PIMKernel::executeGemv()`,
@@ -226,7 +226,7 @@ and also for Eltwise operation (add, mul, relu) in the `PIMKernel::executeEltwis
 ```C
 mem->addTransaction(is_read, address, tag, buffer);
 ```
-* is_read: memory reqeust types between READ('false') and WRITE('true')
+* is_read: memory request types between READ('false') and WRITE('true')
 * address: address used for memory / PIM transaction
 * tag: Used for log or set to barrier. If not used, only three parameters are available,
         as `addTransaction(is_read, address, buffer)`
