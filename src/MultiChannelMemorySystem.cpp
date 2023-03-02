@@ -458,29 +458,14 @@ bool MultiChannelMemorySystem::addBarrier(int chanId)
 bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr, BurstType* data)
 {
     unsigned channelNumber = findChannelNumber(addr);
-    uint64_t c_addr = changeRA12RA13(addr);
-    return channels[channelNumber]->addTransaction(isWrite, c_addr, data);
+    return channels[channelNumber]->addTransaction(isWrite, addr, data);
 }
 
 bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr, const std::string& tag,
                                               BurstType* data)
 {
     unsigned channelNumber = findChannelNumber(addr);
-    uint64_t c_addr = changeRA12RA13(addr);
-    return channels[channelNumber]->addTransaction(isWrite, c_addr, tag, data);
-}
-
-uint64_t MultiChannelMemorySystem::changeRA12RA13(uint64_t addr)
-{
-    std::bitset<64> addr_bit = addr;
-
-    if (addr_bit[32] ^ addr_bit[33])
-    {
-        addr_bit.flip(32);
-        addr_bit.flip(33);
-    }
-
-    return addr_bit.to_ullong();
+    return channels[channelNumber]->addTransaction(isWrite, addr, tag, data);
 }
 
 void MultiChannelMemorySystem::printStats(bool finalStats)

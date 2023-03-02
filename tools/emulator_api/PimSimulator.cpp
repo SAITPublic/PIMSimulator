@@ -10,13 +10,17 @@
  * only)
  **************************************************************************************************/
 
+#include <bitset>
 #include <string>
 #include <vector>
 
 #include "AddressMapping.h"
 #include "PimSimulator.h"
 
-PimSimulator::PimSimulator() : bst_size_(16), cycle_(0) {}
+PimSimulator::PimSimulator()
+    : bst_size_(16), num_channels_(64), num_banks_(16), num_rows_(16384), num_cols_(32), cycle_(0)
+{
+}
 
 PimSimulator::~PimSimulator() {}
 
@@ -62,19 +66,19 @@ void PimSimulator::convert_to_burst_trace(void* trace_data, vector<TraceDataBst>
                                           col);
             // cout << "ch : " << channelNumber << " ra : " << rank << " ba : " << bank
             //      << " row : " << row << " col : " <<col <<endl;
-            if (row >= 16384)
+            if (row >= num_rows_)
             {
                 cout << "overflow" << endl;
             }
-            if (channelNumber >= 64)
+            if (channelNumber >= num_channels_)
             {
                 cout << "overflow" << endl;
             }
-            if (bank >= 16)
+            if (bank >= num_banks_)
             {
                 cout << "overflow" << endl;
             }
-            if (col >= 32)
+            if (col >= num_cols_)
             {
                 cout << "overflow" << endl;
             }
@@ -97,6 +101,19 @@ void PimSimulator::convert_arr_to_burst(void* data, size_t data_size, BurstType*
                                fp16_data[i + 10], fp16_data[i + 11], fp16_data[i + 12],
                                fp16_data[i + 13], fp16_data[i + 14], fp16_data[i + 15]);
     }
+}
+
+uint64_t PimSimulator::changeRA12RA13(uint64_t addr)
+{
+    std::bitset<64> addr_bit = addr;
+
+    if (addr_bit[32] ^ addr_bit[33])
+    {
+        addr_bit.flip(32);
+        addr_bit.flip(33);
+    }
+
+    return addr_bit.to_ullong();
 }
 
 void PimSimulator::push_trace(vector<TraceDataBst>* trace_bst)
@@ -124,34 +141,11 @@ void PimSimulator::push_trace(vector<TraceDataBst>* trace_bst)
             is_write = true;
         }
 
-        mem_->addTransaction(is_write, (*trace_bst)[i].addr, "tag", &(*trace_bst)[i].data);
+        uint64_t c_addr = changeRA12RA13((*trace_bst)[i].addr);
+        mem_->addTransaction(is_write, c_addr, "tag", &(*trace_bst)[i].data);
     }
 }
-/*
-void PimSimulator::enqueue_trace(void* trace_data, size_t num_trace, burst_data* burst)
-{
-    MemTraceData* vec_trace_data = static_cast<MemTraceData*>(trace_data);
-    bool is_write = false;
-    for (int i=0; i<num_trace; i++)
-    {
-        if ( vec_trace_data[i].cmd == 'B' )
-        {
-            mem_->addBarrier(vec_trace_data[i].block_id);
-            continue;
-        }
-        if (vec_trace_data[i].cmd  == 'R')
-        {
-            is_write = false;
-        }
-        else
-        {
-            is_write = true;
-        }
-        memcpy(burst[i].u16_data_, vec_trace_data[i].data, sizeof(uint16_t)*bst_size_);
-        mem_->addTransaction(is_write, vec_trace_data[i].addr, "tag", &burst[i]);
-    }
-}
-*/
+
 void PimSimulator::preload_data_with_addr(uint64_t addr, void* data, size_t data_size)
 {
     int num_burst = (data_size / sizeof(uint16_t)) / bst_size_;
@@ -160,7 +154,8 @@ void PimSimulator::preload_data_with_addr(uint64_t addr, void* data, size_t data
 
     for (int i = 0; i < (data_size / sizeof(uint16_t)) / bst_size_; i++)
     {
-        mem_->addTransaction(true, addr + i * 32, &buffer_burst[i]);
+        uint64_t c_addr = changeRA12RA13(addr + i * 32);
+        mem_->addTransaction(true, c_addr, &buffer_burst[i]);
     }
     run();
 
@@ -183,7 +178,8 @@ void PimSimulator::read_result(uint16_t* output_data, uint64_t addr, size_t data
 
     for (int i = 0; i < num_burst; i++)
     {
-        mem_->addTransaction(false, addr + i * 32, "output", &output_burst[i]);
+        uint64_t c_addr = changeRA12RA13(addr + i * 32);
+        mem_->addTransaction(false, c_addr, "output", &output_burst[i]);
     }
 
     run();

@@ -49,7 +49,7 @@ void PIMKernel::parkIn()
                         str = "END_" + str;
                     mem_->addTransaction(
                         false,
-                        pim_addr_mgr_->addrGen(ch_idx, ra_idx, bg_idx, bank_idx, (1 << 13), 0), str,
+                        pim_addr_mgr_->addrGen(ch_idx, ra_idx, bg_idx, bank_idx, (1 << 12), 0), str,
                         &null_bst_);
                 }
             }
@@ -63,9 +63,9 @@ void PIMKernel::parkOut()
     for (int& ch_idx : pim_chans_)
         for (int& ra_idx : pim_ranks_)
         {
-            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 0, (1 << 13), 0),
+            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 0, (1 << 12), 0),
                                  "START_PARK_OUT_", &null_bst_);
-            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 1, (1 << 13), 0),
+            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 1, (1 << 12), 0),
                                  "END_PARK_OUT_", &null_bst_);
         }
     addBarrier();
@@ -108,20 +108,20 @@ void PIMKernel::changePIMMode(dramMode curMode, dramMode nextMode)
 {
     if (curMode == dramMode::SB && nextMode == dramMode::HAB)
     {
-        addTransactionAll(true, 0, 0, 0x27ff, 0x1f, "START_SB_TO_HAB_", &null_bst_);
-        addTransactionAll(true, 0, 1, 0x27ff, 0x1f, &null_bst_);
+        addTransactionAll(true, 0, 0, 0x17ff, 0x1f, "START_SB_TO_HAB_", &null_bst_);
+        addTransactionAll(true, 0, 1, 0x17ff, 0x1f, &null_bst_);
         if (num_banks_ >= 2)
         {
-            addTransactionAll(true, 2, 0, 0x27ff, 0x1f, &null_bst_);
-            addTransactionAll(true, 2, 1, 0x27ff, 0x1f, "END_SB_TO_HAB_", &null_bst_);
+            addTransactionAll(true, 2, 0, 0x17ff, 0x1f, &null_bst_);
+            addTransactionAll(true, 2, 1, 0x17ff, 0x1f, "END_SB_TO_HAB_", &null_bst_);
         }
     }
     else if (curMode == dramMode::HAB)
     {
         if (nextMode == dramMode::SB)
         {
-            addTransactionAll(true, 0, 0, 0x2fff, 0x1f, "START_HAB_TO_SB", &null_bst_);
-            addTransactionAll(true, 0, 1, 0x2fff, 0x1f, "END_HAB_TO_SB", &null_bst_);
+            addTransactionAll(true, 0, 0, 0x1fff, 0x1f, "START_HAB_TO_SB", &null_bst_);
+            addTransactionAll(true, 0, 1, 0x1fff, 0x1f, "END_HAB_TO_SB", &null_bst_);
         }
         else if (nextMode == dramMode::HAB_PIM)
         {

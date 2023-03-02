@@ -61,12 +61,17 @@ class PimSimulator
     void push_trace(vector<TraceDataBst>* trace_bst);
     void convert_to_burst_trace(void* trace_data, vector<TraceDataBst>* trace_bst,
                                 size_t num_trace);
+    uint64_t changeRA12RA13(uint64_t addr);
 
   private:
     shared_ptr<PIMKernel> pim_kernel_;
     shared_ptr<MultiChannelMemorySystem> mem_;
 
     int bst_size_;
+    size_t num_channels_;
+    size_t num_banks_;
+    size_t num_rows_;
+    size_t num_cols_;
     size_t cycle_;
     AddrMapping* addr_mapping_;
 };
