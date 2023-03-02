@@ -186,7 +186,7 @@ void AddrMapping::addressMapping(uint64_t physicalAddress, unsigned& newTransact
         newTransactionChan = diffBitWidth(&physicalAddress, channelBitWidth);
         newTransactionBank = diffBitWidth(&physicalAddress, bankBitWidth - bankgroupBitWidth);
         newTransactionBank |= diffBitWidth(&physicalAddress, bankgroupBitWidth)
-                              << bankgroupBitWidth;
+                              << (bankBitWidth - bankgroupBitWidth);
         newTransactionColumn = diffBitWidth(&physicalAddress, colHighBitWidth);
         newTransactionRow = diffBitWidth(&physicalAddress, rowBitWidth);
         newTransactionRank = diffBitWidth(&physicalAddress, rankBitWidth);
