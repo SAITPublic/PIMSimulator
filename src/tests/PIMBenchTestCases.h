@@ -143,10 +143,6 @@ class GemvPIMBenchTest : public PIMBenchTestCase
             starting_addr = genMemTraffic(mem_, false, weight_data_size_in_byte, starting_addr);
             starting_addr = genMemTraffic(mem_, false, input_data_size_in_byte, starting_addr);
             run(mem_, &cycle);
-            starting_addr = genMemTraffic(mem_, true, output_data_size_in_byte, starting_addr);
-            run(mem_, &cycle);
-            starting_addr = genMemTraffic(mem_, false, input_data_size_in_byte, starting_addr);
-            run(mem_, &cycle);
             genMemTraffic(mem_, true, output_data_size_in_byte, starting_addr);  // result-vec
             run(mem_, &cycle);
         }
