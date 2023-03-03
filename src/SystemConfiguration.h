@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -86,6 +87,7 @@ enum AddressMappingScheme
     Scheme6,
     Scheme7,
     Scheme8,
+    SCHEME_MAX
 };
 
 // used in MemoryController and CommandQueue
@@ -381,19 +383,15 @@ class PIMConfiguration
     static AddressMappingScheme getAddressMappingScheme()
     {
         string param = getConfigParam(STRING, "ADDRESS_MAPPING_SCHEME");
-        for (unsigned i = Scheme1; i <= Scheme7; ++i)
+        for (unsigned i = Scheme1; i < SCHEME_MAX; ++i)
         {
             string s{"scheme" + to_string(i)};
-            if (param == s)
+            if (strcasecmp(param.c_str(), s.c_str()) == 0)
             {
                 return AddressMappingScheme(i);
             }
         }
 
-        if (param == "Scheme8")
-        {
-            return Scheme8;
-        }
         throw invalid_argument("Invalid address mapping scheme");
     }
 
