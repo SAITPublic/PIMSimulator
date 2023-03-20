@@ -61,13 +61,26 @@ void PIMKernel::parkIn()
 void PIMKernel::parkOut()
 {
     for (int& ch_idx : pim_chans_)
+    {
         for (int& ra_idx : pim_ranks_)
         {
-            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 0, (1 << 12), 0),
-                                 "START_PARK_OUT_", &null_bst_);
-            mem_->addTransaction(false, pim_addr_mgr_->addrGen(ch_idx, ra_idx, 0, 1, (1 << 12), 0),
-                                 "END_PARK_OUT_", &null_bst_);
+            for (int bank_idx = 0; bank_idx < num_banks_ / num_bank_groups_; bank_idx++)
+            {
+                for (int bg_idx = 0; bg_idx < num_bank_groups_; bg_idx++)
+                {
+                    string str = "PARK_OUT_";
+                    if (bg_idx == 0 && bank_idx == 0)
+                        str = "START_" + str;
+                    else if (bg_idx == 3 && bank_idx == 3)
+                        str = "END_" + str;
+                    mem_->addTransaction(
+                        false,
+                        pim_addr_mgr_->addrGen(ch_idx, ra_idx, bg_idx, bank_idx, (1 << 12), 0), str,
+                        &null_bst_);
+                }
+            }
         }
+    }
     addBarrier();
 }
 
