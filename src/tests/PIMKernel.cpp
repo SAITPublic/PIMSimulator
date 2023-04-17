@@ -553,8 +553,6 @@ void PIMKernel::computeAddOrMul(int num_tile, int input0_row, int result_row, in
             addTransactionAll(false, 0, b, input1_row, c, "ADD", &null_bst_, true, num_grf_);
             addTransactionAll(true, 0, b, result_row, c, "GRF_TO_BANK", &null_bst_, true, num_grf_);
         }
-        addTransactionAll(true, 0, 1, result_row, c + num_grf_ - 1, "GRF_TO_BANK_DUMMY", &null_bst_,
-                          true, 1);
     }
 }
 
@@ -585,8 +583,6 @@ void PIMKernel::computeBn(int num_tile, int input0_row, int result_row)
             addTransactionAll(true , 0, b, result_row, num_grf_ * i, "GRF_TO_BANK", &null_bst_,
                               true, num_grf_);
         }
-        addTransactionAll(true , 0, 1, result_row, num_grf_ * i + num_grf_ - 1, "GRF_TO_BANK_DUMMY",
-                          &null_bst_, true, 1);
     }
 }
 */
@@ -602,8 +598,6 @@ void PIMKernel::computeRelu(int num_tile, int input0_row, int result_row)
         addTransactionAll(false, 0, 1, input0_row, c, "FILL&ReLU", &null_bst_, true, num_grf_);
         addTransactionAll(true, 0, 1, result_row, c, "GRF_B_TO_ODD_BANK", &null_bst_, true,
                           num_grf_);
-        addTransactionAll(true, 0, 1, result_row, c + num_grf_ - 1, "GRF_TO_BANK_DUMMY", &null_bst_,
-                          true, 1);
     }
 }
 
