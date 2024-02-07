@@ -142,13 +142,9 @@ ADDRESS_MAPPING_SCHEME=Scheme8
 ```bash
 sudo apt install scons
 ```
-* `gtest` for running test cases (https://github.com/google/googletest):
+* `gtest` for running test cases:
 ```bash
-git clone https://github.com/google/googletest.git
-cd googletest/googletest
-cmake ..
-make
-sudo make install
+sudo apt install libgtest-dev
 ```
 
 ### 3.2 Installing
