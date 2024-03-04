@@ -13,6 +13,7 @@
 #ifndef __PIM_CMD_HPP__
 #define __PIM_CMD_HPP__
 
+#include <cstdint>
 #include <bitset>
 #include <iostream>
 #include <sstream>
