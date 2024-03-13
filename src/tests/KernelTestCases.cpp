@@ -54,7 +54,7 @@ TEST_F(PIMKernelFixture, gemv_tree)
 
     delete result_;
     delete reduced_result_;
-    delete temp_fp16;
+    delete[] temp_fp16;
     delete dim_data;
 }
 
