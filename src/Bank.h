@@ -40,6 +40,7 @@
 #include "BusPacket.h"
 #include "SimulatorObject.h"
 #include "SystemConfiguration.h"
+#include "SubArray.h"
 
 namespace DRAMSim
 {
@@ -51,7 +52,7 @@ class Bank
         BurstType data;
         std::shared_ptr<struct _DataStruct> next;
     } DataStruct;
-
+    //how about use this in subarray level logic?
   public:
     // functions
     Bank(ostream& simLog);
@@ -59,13 +60,13 @@ class Bank
     void read(BusPacket* busPacket);
     void write(const BusPacket* busPacket);
     BankState currentState;
+    unsigned numCols;
 
   private:
     // private member
     std::vector<std::shared_ptr<DataStruct>> rowEntries;
     ostream& dramsimLog;
     static std::shared_ptr<DataStruct> searchForRow(unsigned row, std::shared_ptr<DataStruct> head);
-    unsigned numCols;
 };
 }  // namespace DRAMSim
 

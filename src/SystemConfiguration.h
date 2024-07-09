@@ -32,7 +32,6 @@
 #define SYSCONFIG_H
 
 #include <stdint.h>
-
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -64,6 +63,7 @@ extern bool PRINT_CHAN_STAT;
 extern bool DEBUG_PIM_TIME;
 extern bool DEBUG_CMD_TRACE;
 extern bool DEBUG_PIM_BLOCK;
+extern bool DEBUG_SUBARRAYS;
 
 extern std::string SIM_TRACE_FILE;
 extern bool SHOW_SIM_OUTPUT;
@@ -102,12 +102,14 @@ enum RowBufferPolicy
 enum QueuingStructure
 {
     PerRank,
-    PerRankPerBank
+    PerRankPerBank,
+    PerRankPerBankPerSubarray
 };
 enum SchedulingPolicy
 {
     RankThenBankRoundRobin,
-    BankThenRankRoundRobin
+    BankThenRankRoundRobin,
+    RankThenBankThenSubarrayRoundRobin
 };
 
 enum PIMMode
@@ -115,11 +117,13 @@ enum PIMMode
     mac_in_bankgroup,
     mac_in_bank
 };
+
 enum PIMPrecision
 {
+    INT4,
     FP16,
     INT8,
-    FP32
+    FP32,
 };
 
 enum class dramMode
@@ -133,7 +137,7 @@ enum class pimBankType
 {
     EVEN_BANK,
     ODD_BANK,
-    ALL_BANK
+    ALL_BANK//which is two but ...maybe..
 };
 // set by IniReader.cpp
 
@@ -357,11 +361,12 @@ class PIMConfiguration
         string param = getConfigParam(STRING, "ROW_BUFFER_POLICY");
         if (param == "open_page")
         {
-            return OpenPage;
+            return OpenPage; // default
         }
         else if (param == "close_page")
         {
-            return ClosePage;
+            //return ClosePage;
+            throw invalid_argument("Close page policy is not supported");
         }
         throw invalid_argument("Invalid row buffer policy");
     }
@@ -377,6 +382,10 @@ class PIMConfiguration
         else if (param == "bank_then_rank_round_robin")
         {
             return BankThenRankRoundRobin;
+        }
+        else if (param == "rank_then_bank_then_subarray_round_robin")
+        {
+            return RankThenBankThenSubarrayRoundRobin;
         }
         throw invalid_argument("Invalid scheduling policy");
     }
@@ -406,6 +415,10 @@ class PIMConfiguration
         else if (param == "per_rank")
         {
             return PerRank;
+        }
+        else if (param == "per_rank_per_bank_per_subarray")
+        {
+            return PerRankPerBankPerSubarray;
         }
         throw invalid_argument("Invalid queueing structure");
     }
@@ -438,6 +451,10 @@ class PIMConfiguration
         else if (param == "FP32")
         {
             return FP32;
+        }
+        else if (param == "INT4")
+        {
+            return INT4;
         }
         throw invalid_argument("Invalid PIM precision");
     }

@@ -20,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "FP16.h"
 #include "npy.h"
@@ -169,7 +170,6 @@ union BurstType
             fp16Data_[i] = (fp16)dis(gen);
         }
     }
-
     string binToStr() const
     {
         stringstream ss;
@@ -300,7 +300,15 @@ union BurstType
 
         return sum[0];
     }
-
+    fp16 fp16max()
+    {
+        float maxValue = convertH2F(fp16Data_[0]);
+        for(int i = 1; i < 16; i++)
+        {
+            maxValue = std::max(maxValue, convertH2F(fp16Data_[i]));
+        }
+        return convertF2H(maxValue);
+    }
     float fp32ReduceSum()
     {
         float sum = 0.0;
@@ -340,12 +348,14 @@ union BurstType
         return ret;
     }
 
-    fp16 fp16Data_[16];
     uint8_t u8Data_[32];
     float fp32Data_[8];
     uint32_t u32Data_[8];
     uint16_t u16Data_[16];
+    fp16 fp16Data_[16];
 };
+
+
 
 struct NumpyBurstType
 {

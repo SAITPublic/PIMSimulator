@@ -28,11 +28,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************************/
 
-#include "Transaction.h"
-
 #include <string>
 
 #include "PrintMacros.h"
+#include "Transaction.h"
 
 using std::dec;
 using std::endl;
@@ -43,14 +42,24 @@ namespace DRAMSim
 Transaction::Transaction(TransactionType transType, uint64_t addr, BurstType* dat)
     : transactionType(transType), address(addr), data(dat)
 {
-    rowBufferPolicy = PIMConfiguration::getRowBufferPolicy();
+    if(transactionType != DATA_READ && transactionType != DATA_WRITE && transactionType != RETURN_DATA)
+    {
+        ERROR("Transaction type is not read or write\n");
+        abort();
+    }
+    rowBufferPolicy = RowBufferPolicy::OpenPage;
 }
 
 Transaction::Transaction(TransactionType transType, uint64_t addr, const std::string& str,
                          BurstType* dat)
     : transactionType(transType), address(addr), tag(str), data(dat)
 {
-    rowBufferPolicy = PIMConfiguration::getRowBufferPolicy();
+    if(transactionType != DATA_READ && transactionType != DATA_WRITE && transactionType != RETURN_DATA)
+    {
+        ERROR("Transaction type is not read or write\n");
+        abort();
+    }
+    rowBufferPolicy = RowBufferPolicy::OpenPage;
 }
 
 Transaction::Transaction(const Transaction& t)
@@ -60,7 +69,12 @@ Transaction::Transaction(const Transaction& t)
       timeAdded(t.timeAdded),
       timeReturned(t.timeReturned)
 {
-    rowBufferPolicy = PIMConfiguration::getRowBufferPolicy();
+    if(transactionType != DATA_READ && transactionType != DATA_WRITE && transactionType != RETURN_DATA)
+    {
+        ERROR("Transaction type is not read or write\n");
+        abort();
+    }
+    rowBufferPolicy = RowBufferPolicy::OpenPage;
 #ifndef NO_STORAGE
     ERROR(
         "Data storage is really outdated and these copies happen in an \n "

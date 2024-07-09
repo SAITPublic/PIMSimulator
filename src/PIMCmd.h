@@ -18,6 +18,7 @@
 #include <sstream>
 #include <string>
 
+
 using namespace std;
 
 namespace DRAMSim
@@ -39,7 +40,10 @@ enum class PIMCmdType
     REV5,
     REV6,
     JUMP,
-    EXIT
+    EXIT,
+    LDEXPF,
+    COPY,
+    MAX
 };
 
 enum class PIMOpdType
@@ -48,10 +52,13 @@ enum class PIMOpdType
     M_OUT,
     EVEN_BANK,
     ODD_BANK,
+    BANK,
     GRF_A,
     GRF_B,
     SRF_M,
-    SRF_A
+    SRF_A,
+    GRF,
+    BLF,
 };
 
 class PIMCmd
@@ -130,12 +137,11 @@ class PIMCmd
           dstIdx_(dst_idx),
           src0Idx_(src0_idx),
           src1Idx_(src1_idx),
-          isRelu_(is_relu)
+          isRelu_(is_relu) // we can use this for fill or mov logic
     {
     }
-
-    PIMCmd(PIMCmdType type, PIMOpdType dst, PIMOpdType src0, PIMOpdType src1, int is_auto = 0,
-           int dst_idx = 0, int src0_idx = 0, int src1_idx = 0)
+/*    PIMCmd(PIMCmdType type, PIMOpdType dst, PIMOpdType src0, PIMOpdType src1, int is_auto = 0,
+           int dst_idx = 0, int src0_idx = 0, int src1_idx = 0, int is_relu = 0)
         : type_(type),
           dst_(dst),
           src0_(src0),
@@ -146,12 +152,29 @@ class PIMCmd
           isAuto_(is_auto),
           dstIdx_(dst_idx),
           src0Idx_(src0_idx),
+          src1Idx_(src1_idx),
+          isRelu_(is_relu) // we can use this for fill or mov logic
+    {
+    }
+*/    
+    PIMCmd(PIMCmdType type, PIMOpdType dst, PIMOpdType src0, PIMOpdType src1, int is_auto = 0,
+           int dst_idx = 0, int src0_idx = 0, int src1_idx = 0)
+        : type_(type),
+          dst_(dst),
+          src0_(src0),
+          src1_(src1),
+          src2_(PIMOpdType::A_OUT), //WH
+          loopCounter_(0),
+          loopOffset_(0),
+          isAuto_(is_auto), 
+          dstIdx_(dst_idx),
+          src0Idx_(src0_idx),
           src1Idx_(src1_idx)
     {
     }
 
     PIMCmd(PIMCmdType type, PIMOpdType dst, PIMOpdType src0, PIMOpdType src1, PIMOpdType src2,
-           int is_auto = 0, int dst_idx = 0, int src0_idx = 0, int src1_idx = 0)
+           int is_auto = 0, int dst_idx = 0, int src0_idx = 0, int src1_idx = 0) //mad
         : type_(type),
           dst_(dst),
           src0_(src0),
@@ -165,6 +188,7 @@ class PIMCmd
           src1Idx_(src1_idx)
     {
     }
+
 
     uint32_t bitmask(int bit) const
     {
@@ -192,10 +216,16 @@ class PIMCmd
                 return "EVEN_BANK";
             case PIMOpdType::ODD_BANK:
                 return "ODD_BANK";
+            case PIMOpdType::BANK:
+                return "BANK";
+            case PIMOpdType::BLF:
+                return "BLF";
             case PIMOpdType::GRF_A:
                 return "GRF_A[" + to_string(idx) + "]";
             case PIMOpdType::GRF_B:
                 return "GRF_B[" + to_string(idx) + "]";
+            case PIMOpdType::GRF:
+                return "GRF[" + to_string(idx) + "]";
             case PIMOpdType::SRF_M:
                 return "SRF_M[" + to_string(idx) + "]";
             case PIMOpdType::SRF_A:
@@ -223,10 +253,14 @@ class PIMCmd
                 return "ADD";
             case PIMCmdType::MUL:
                 return "MUL";
+            case PIMCmdType::MAX:
+                return "MAX";
             case PIMCmdType::MAC:
                 return "MAC";
             case PIMCmdType::MAD:
                 return "MAD";
+            case PIMCmdType::COPY:
+                return "COPY";
             default:
                 return "NOT_DEFINED";
         }

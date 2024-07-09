@@ -27,79 +27,45 @@
  *  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************************/
+#ifndef SUBARRAY_H
+#define SUBARRAY_H
 
-#ifndef MEMORYSYSTEM_H
-#define MEMORYSYSTEM_H
-
-#include <deque>
-#include <string>
+#include <iostream>
+#include <memory>
 #include <vector>
 
-#include "AddressMapping.h"
+#include "BankState.h"
 #include "Burst.h"
-#include "CSVWriter.h"
-#include "Callback.h"
-#include "Configuration.h"
-#include "MemoryController.h"
-#include "MemoryObject.h"
-#include "Rank.h"
+#include "BusPacket.h"
 #include "SimulatorObject.h"
 #include "SystemConfiguration.h"
-#include "Transaction.h"
-#include "Utils.h"
 
 namespace DRAMSim
 {
-typedef CallbackBase<void, unsigned, uint64_t, uint64_t> Callback_t;
-
-class MemorySystem : public MemoryObject
+class Subarray //x4
 {
+    typedef struct _DataStruct
+    {
+        unsigned row;
+        BurstType data; //16x16
+        std::shared_ptr<struct _DataStruct> next; //points to next datastruct
+    } DataStruct;
+    //how about use this in subarray level logic?
   public:
     // functions
-    MemorySystem(unsigned id, unsigned megsOfMemory, CSVWriter& csvOut_, ostream& simLog,
-                 Configuration& config);
-    MemorySystem(unsigned id, unsigned megsOfMemory, CSVWriter& csvOut_, ostream& simLog,
-                 Configuration& config, bool is_salp);
-    virtual ~MemorySystem();
-    void update();
+    Subarray(ostream& simLog);
 
-    virtual bool addTransaction(Transaction* trans);
-    virtual bool addTransaction(bool isWrite, uint64_t addr, BurstType* data);
-    virtual bool addTransaction(bool isWrite, uint64_t addr, const std::string& tag,
-                                BurstType* data);
-
-    bool addBarrier();
-    bool WillAcceptTransaction();
-    bool WillAcceptTransaction(uint64_t addr);
-
-    void printStats(bool finalStats);
-
-    void RegisterCallbacks(Callback_t* readDone, Callback_t* writeDone,
-                           void (*reportPower)(double bgpower, double burstpower,
-                                               double refreshpower, double actprepower));
-    // fields
-    MemoryController* memoryController; // decide whether salp or not
-    vector<Rank*>* ranks; //decide whether salp or not
-    deque<Transaction*> pendingTransactions;
-
-    // function pointers
-    Callback_t* ReturnReadData;
-    Callback_t* WriteDataDone;
-
-    // TODO: make this a functor as well?
-    static powerCallBack_t ReportPower;
-    unsigned systemID;
-    uint64_t numOnTheFlyTransactions;
+    void read(BusPacket* busPacket);
+    void write(const BusPacket* busPacket);
+    BankState currentState;
+    int getRow();
 
   private:
-    CSVWriter& csvOut;
+    // private member
+    std::vector<std::shared_ptr<DataStruct>> rowEntries;
     ostream& dramsimLog;
-
-    // system and timing parameters
-    unsigned num_ranks_;
-    Configuration& config;
-    bool is_salp_;
+    static std::shared_ptr<DataStruct> searchForRow(unsigned row, std::shared_ptr<DataStruct> head); //memory leak/dealloc easily
+    unsigned numCols; 
 };
-}  // namespace DRAMSim
-
+} 
 #endif

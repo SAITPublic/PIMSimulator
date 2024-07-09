@@ -42,6 +42,13 @@ void PIMCmd::fromInt(uint32_t val)
             break;
 
         case PIMCmdType::FILL:
+            dst_ = PIMOpdType(fromBit(val, 3, 25));
+            src0_ = PIMOpdType(fromBit(val, 3, 22));
+            dstIdx_ = fromBit(val, 4, 8);
+            src0Idx_ = fromBit(val, 4, 4);
+            src1Idx_ = fromBit(val, 4, 0);
+            isRelu_ = fromBit(val, 1, 12);
+            break;
         case PIMCmdType::MOV:
             dst_ = PIMOpdType(fromBit(val, 3, 25));
             src0_ = PIMOpdType(fromBit(val, 3, 22));
@@ -53,8 +60,41 @@ void PIMCmd::fromInt(uint32_t val)
 
         case PIMCmdType::MAD:
             src2_ = PIMOpdType(fromBit(val, 3, 16));
+            dst_ = PIMOpdType(fromBit(val, 3, 25));
+            src0_ = PIMOpdType(fromBit(val, 3, 22));
+            src1_ = PIMOpdType(fromBit(val, 3, 19));
+            isAuto_ = fromBit(val, 1, 15);
+            dstIdx_ = fromBit(val, 4, 8);
+            src0Idx_ = fromBit(val, 4, 4);
+            src1Idx_ = fromBit(val, 4, 0);
+            break;
         case PIMCmdType::ADD:
+            dst_ = PIMOpdType(fromBit(val, 3, 25));
+            src0_ = PIMOpdType(fromBit(val, 3, 22));
+            src1_ = PIMOpdType(fromBit(val, 3, 19));
+            isAuto_ = fromBit(val, 1, 15);
+            dstIdx_ = fromBit(val, 4, 8);
+            src0Idx_ = fromBit(val, 4, 4);
+            src1Idx_ = fromBit(val, 4, 0);
+            break;
+        case PIMCmdType::MAX:
+            dst_ = PIMOpdType(fromBit(val, 3, 25));
+            src0_ = PIMOpdType(fromBit(val, 3, 22));
+            src1_ = PIMOpdType(fromBit(val, 3, 19));
+            isAuto_ = fromBit(val, 1, 15);
+            dstIdx_ = fromBit(val, 4, 8);
+            src0Idx_ = fromBit(val, 4, 4);
+            src1Idx_ = fromBit(val, 4, 0);
+            break;
         case PIMCmdType::MUL:
+            dst_ = PIMOpdType(fromBit(val, 3, 25));
+            src0_ = PIMOpdType(fromBit(val, 3, 22));
+            src1_ = PIMOpdType(fromBit(val, 3, 19));
+            isAuto_ = fromBit(val, 1, 15);
+            dstIdx_ = fromBit(val, 4, 8);
+            src0Idx_ = fromBit(val, 4, 4);
+            src1Idx_ = fromBit(val, 4, 0);
+            break;
         case PIMCmdType::MAC:
             dst_ = PIMOpdType(fromBit(val, 3, 25));
             src0_ = PIMOpdType(fromBit(val, 3, 22));
@@ -72,7 +112,7 @@ void PIMCmd::fromInt(uint32_t val)
 
 void PIMCmd::validationCheck() const
 {
-    if (type_ == PIMCmdType::MOV || type_ == PIMCmdType::FILL)
+    /*if (type_ == PIMCmdType::MOV || type_ == PIMCmdType::FILL)
     {
         if (dst_ == PIMOpdType::EVEN_BANK || dst_ == PIMOpdType::ODD_BANK)
         {
@@ -93,8 +133,8 @@ void PIMCmd::validationCheck() const
            exit(-1);
            }
            }
-         */
-    }
+
+    } */
 }
 
 uint32_t PIMCmd::toInt() const
@@ -127,8 +167,43 @@ uint32_t PIMCmd::toInt() const
 
         case PIMCmdType::MAD:
             val |= toBit(int(src2_), 3, 16);
+            val |= toBit(int(dst_), 3, 25);
+            val |= toBit(int(src0_), 3, 22);
+            val |= toBit(int(src1_), 3, 19);
+            val |= toBit(isAuto_, 1, 15);
+            val |= toBit(dstIdx_, 4, 8);
+            val |= toBit(src0Idx_, 4, 4);
+            val |= toBit(src1Idx_, 4, 0);
+            break;
+
         case PIMCmdType::ADD:
+            val |= toBit(int(dst_), 3, 25);
+            val |= toBit(int(src0_), 3, 22);
+            val |= toBit(int(src1_), 3, 19);
+            val |= toBit(isAuto_, 1, 15);
+            val |= toBit(dstIdx_, 4, 8);
+            val |= toBit(src0Idx_, 4, 4);
+            val |= toBit(src1Idx_, 4, 0);
+            break;
+        case PIMCmdType::MAX:
+            val |= toBit(int(dst_), 3, 25);
+            val |= toBit(int(src0_), 3, 22);
+            val |= toBit(int(src1_), 3, 19);
+            val |= toBit(isAuto_, 1, 15);
+            val |= toBit(dstIdx_, 4, 8);
+            val |= toBit(src0Idx_, 4, 4);
+            val |= toBit(src1Idx_, 4, 0);
+            break;
         case PIMCmdType::MUL:
+            val |= toBit(int(dst_), 3, 25);
+            val |= toBit(int(src0_), 3, 22);
+            val |= toBit(int(src1_), 3, 19);
+            val |= toBit(isAuto_, 1, 15);
+            val |= toBit(dstIdx_, 4, 8);
+            val |= toBit(src0Idx_, 4, 4);
+            val |= toBit(src1Idx_, 4, 0);
+            break;
+
         case PIMCmdType::MAC:
             val |= toBit(int(dst_), 3, 25);
             val |= toBit(int(src0_), 3, 22);

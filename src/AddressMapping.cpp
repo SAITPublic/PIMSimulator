@@ -28,11 +28,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************************/
 
-#include "AddressMapping.h"
-
 #include <bitset>
 #include <iostream>
 
+#include "AddressMapping.h"
 #include "SystemConfiguration.h"
 #include "Utils.h"
 
@@ -49,6 +48,7 @@ AddrMapping::AddrMapping()
     rankBitWidth = uLog2(getConfigParam(UINT, "NUM_RANKS"));
     bankBitWidth = uLog2(getConfigParam(UINT, "NUM_BANKS"));
     bankgroupBitWidth = uLog2(getConfigParam(UINT, "NUM_BANK_GROUPS"));
+    //subarrayBitWidth = uLog2(getConfigParam(UINT, "NUM_SUBARRAYS")); //how we make, how about we use ...
     rowBitWidth = uLog2(getConfigParam(UINT, "NUM_ROWS"));
     colBitWidth = uLog2(getConfigParam(UINT, "NUM_COLS"));
     byteOffsetWidth = uLog2(getConfigParam(UINT, "JEDEC_DATA_BUS_BITS") / 8);
@@ -69,6 +69,18 @@ unsigned AddrMapping::bankgroupId(int bank)
 bool AddrMapping::isSameBankgroup(int bank0, int bank1)
 {
     return bankgroupId(bank0) == bankgroupId(bank1);
+}
+unsigned AddrMapping::findsubarray(unsigned row)
+{
+    if(row < 0x2000)  return 0;
+    else if(row<0x4000) return 1;
+    else if(row<0x6000) return 2;
+    else return 3;
+}
+
+bool AddrMapping::isSameSubarray(int row, int sub)
+{
+    return findsubarray(row) == sub;
 }
 
 void AddrMapping::addressMapping(uint64_t physicalAddress, unsigned& newTransactionChan,
@@ -172,7 +184,7 @@ void AddrMapping::addressMapping(uint64_t physicalAddress, unsigned& newTransact
         newTransactionChan = diffBitWidth(&physicalAddress, channelBitWidth);
     }
     // clone of scheme 5, but channel moved to lower bits
-    else if (addressMappingScheme == Scheme7)
+    else if (addressMappingScheme == Scheme7) //how about using this logic?
     {
         // row:col:rank:bank:chan
         newTransactionChan = diffBitWidth(&physicalAddress, channelBitWidth);

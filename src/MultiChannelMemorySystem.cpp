@@ -30,7 +30,6 @@
 
 #include <errno.h>
 #include <stdlib.h>  // getenv()
-
 #include <bitset>
 #include <iomanip>
 #include <locale>
@@ -59,7 +58,8 @@ using namespace DRAMSim;
 MultiChannelMemorySystem::MultiChannelMemorySystem(const string& deviceIniFilename_,
                                                    const string& systemIniFilename_,
                                                    const string& pwd_, const string& traceFilename_,
-                                                   unsigned megsOfMemory_, string* visFilename_)
+                                                   unsigned megsOfMemory_, string* visFilename_,
+                                                   bool is_salp)
     : megsOfMemory(megsOfMemory_),
       deviceIniFilename(deviceIniFilename_),
       systemIniFilename(systemIniFilename_),
@@ -68,7 +68,8 @@ MultiChannelMemorySystem::MultiChannelMemorySystem(const string& deviceIniFilena
       visFilename(visFilename_),
       clockDomainCrosser(new ClockDomain::Callback<MultiChannelMemorySystem, void>(
           this, &MultiChannelMemorySystem::actual_update)),
-      csvOut(new CSVWriter(visDataOut))
+      csvOut(new CSVWriter(visDataOut)),
+      is_salp_(is_salp)
 {
     currentClockCycle = 0;
     if (visFilename)
@@ -91,8 +92,9 @@ MultiChannelMemorySystem::MultiChannelMemorySystem(const string& deviceIniFilena
 
     for (size_t i = 0; i < configuration->NUM_CHANS; i++)
     {
-        MemorySystem* channel = new MemorySystem(i, megsOfMemory / configuration->NUM_CHANS,
-                                                 (*csvOut), dramsimLog, *configuration);
+        MemorySystem* channel = new MemorySystem(i, megsOfMemory / 64,
+                                                 (*csvOut), dramsimLog, *configuration, is_salp_);
+        //cout<<"channel "<<i<<" created"<<" and bank size is "<<channel->ranks->front()->banks_sub.size()<<endl;       
         channels.push_back(channel);
     }
 }
@@ -353,10 +355,8 @@ void MultiChannelMemorySystem::mkdirIfNotExist(string path)
 MultiChannelMemorySystem::~MultiChannelMemorySystem()
 {
     // delete clockDomainCrosser;
-    delete csvOut;
     delete[] numFence;
     delete addrMapping;
-    delete configuration;
 
     for (size_t i = 0; i < configuration->NUM_CHANS; i++)
     {
@@ -364,6 +364,8 @@ MultiChannelMemorySystem::~MultiChannelMemorySystem()
     }
     channels.clear();
 
+    delete configuration;
+    delete csvOut;
     // flush our streams and close them up
     if (LOG_OUTPUT)
     {
@@ -385,15 +387,15 @@ void MultiChannelMemorySystem::update()
 
 void MultiChannelMemorySystem::actual_update()
 {
-    if (currentClockCycle == 0)
+    /*if (currentClockCycle == 0)
     {
         InitOutputFiles(traceFilename);
         DEBUG("DRAMSim2 Clock Frequency =" << clockDomainCrosser.clock1
                                            << "Hz, CPU Clock Frequency="
                                            << clockDomainCrosser.clock2 << "Hz");
-    }
+    }*/
 
-    if (currentClockCycle > 0 && currentClockCycle % configuration->EPOCH_LENGTH == 0)
+    /*if (currentClockCycle > 0 && currentClockCycle % configuration->EPOCH_LENGTH == 0)
     {
         (*csvOut) << "ms" << currentClockCycle * configuration->tCK * 1E-6;
         for (size_t i = 0; i < configuration->NUM_CHANS; i++)
@@ -401,7 +403,7 @@ void MultiChannelMemorySystem::actual_update()
             channels[i]->printStats(false);
         }
         csvOut->finalize();
-    }
+    }*/
 
     for (size_t i = 0; i < configuration->NUM_CHANS; i++)
     {
@@ -419,13 +421,13 @@ unsigned MultiChannelMemorySystem::findChannelNumber(uint64_t addr)
         return 0;
     }
 
-    if (!isPowerOfTwo(configuration->NUM_CHANS))
+    /*if (!isPowerOfTwo(configuration->NUM_CHANS))
     {
         ERROR("We can only support power of two # of channels.\n"
               << "I don't know what Intel was thinking, but trying to address map half"
                  " a bit is a neat trick that we're not sure how to do");
         abort();
-    }
+    }*/
 
     // only chan is used from this set
     unsigned channelNumber, rank, bank, row, col;
@@ -468,6 +470,8 @@ bool MultiChannelMemorySystem::addTransaction(bool isWrite, uint64_t addr, const
     unsigned channelNumber = findChannelNumber(addr);
     return channels[channelNumber]->addTransaction(isWrite, addr, tag, data);
 }
+
+//using data mode, we can do ...
 
 void MultiChannelMemorySystem::printStats(bool finalStats)
 {

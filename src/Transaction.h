@@ -65,13 +65,13 @@ class Transaction
     Transaction(TransactionType transType, uint64_t addr, BurstType* dat);
     Transaction(TransactionType transType, uint64_t addr, const std::string& str, BurstType* dat);
     Transaction(const Transaction& t);
-
+    //are there other transaction type?
     BusPacketType getBusPacketType()
     {
-        if (!isAllowedRowBufferPolicy(rowBufferPolicy))
+        /*if (!isAllowedRowBufferPolicy(rowBufferPolicy))
         {
             throw invalid_argument("Unknown row buffer policy");
-        }
+        }*/
         switch (transactionType)
         {
             case DATA_READ:

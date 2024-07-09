@@ -55,14 +55,16 @@ class AddrMapping
     }
 
     unsigned bankgroupId(int bank);
+    static unsigned findsubarray(unsigned row);
     bool isSameBankgroup(int bank0, int bank1);
-
+    bool isSameSubarray(int row, int sub);
   private:
     uint64_t transactionSize;
     uint64_t transactionMask;
     uint64_t channelBitWidth;
     uint64_t rankBitWidth;
     uint64_t bankBitWidth;
+    uint64_t subarrayBitWidth;
     uint64_t bankgroupBitWidth;
     uint64_t rowBitWidth;
     uint64_t colBitWidth;

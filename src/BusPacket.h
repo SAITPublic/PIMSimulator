@@ -46,7 +46,8 @@ enum BusPacketType
     PRECHARGE,  // 3
     REF,        // 4
     DATA,       // 5
-    RFCSB
+    RFCSB,
+    SUBSEL
 };
 
 class BusPacket
@@ -57,10 +58,12 @@ class BusPacket
   public:
     // Fields
     BusPacketType busPacketType;
-    unsigned column;
+    unsigned column; //important problem: buspacket has 256bit wide -->need cell logic
     unsigned row;
+    unsigned subarray; //or psub; designate psub area by 
     unsigned bank;
     unsigned rank;
+    unsigned chan;
     uint64_t physicalAddress;
     BurstType* data;
     std::string tag;

@@ -59,6 +59,19 @@ BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col
 {
 }
 
+/*BusPacket::BusPacket(BusPacketType packtype, uint64_t physicalAddr, unsigned col, unsigned rw, unsigned r,
+              unsigned b, unsigned s, BurstType* dat, ostream& simLog, std::string tg)
+    : dramsimLog(simLog),
+      BusPacketType(packtype),
+      column(col),
+      row(rw),
+      subarray(s),
+      bank(b),
+      physicalAddress(physicalAddr),
+      data(dat),
+      tag(tg)
+{
+} //nothing help b*/
 void BusPacket::print(uint64_t currentClockCycle, bool dataStart)
 {
     if (VERIFICATION_OUTPUT)

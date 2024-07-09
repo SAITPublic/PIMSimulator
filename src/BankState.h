@@ -31,6 +31,9 @@
 #ifndef BANKSTATE_H
 #define BANKSTATE_H
 
+#include <string>
+#include <vector>
+
 #include "BusPacket.h"
 #include "SystemConfiguration.h"
 
@@ -42,7 +45,7 @@ enum CurrentBankState
     RowActive,
     Precharging,
     Refreshing,
-    PowerDown
+    PowerDown,
 };
 
 class BankState
@@ -52,10 +55,13 @@ class BankState
   public:
     // Fields
     CurrentBankState currentBankState;
+    //vector<CurrentBankState> currentBankStates;
     unsigned openRowAddress;
+    //vector<unsigned> openRowAddresses; //exactly subsel....
     uint64_t nextRead;
     uint64_t nextWrite;
     uint64_t nextActivate;
+    uint64_t nextSubSel; //subsel logic with activation....
     uint64_t nextPrecharge;
     uint64_t nextPowerUp;
     BusPacketType lastCommand;

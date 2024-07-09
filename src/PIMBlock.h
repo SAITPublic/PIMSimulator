@@ -34,9 +34,9 @@ class PIMBlock
     }
     PIMBlock(const PIMPrecision& pimPrecision) : pimPrecision_(pimPrecision) {}
 
-    BurstType srf;
+    BurstType srf; // srf has A part and M part each consists of 8 scalas each
     BurstType grfA[8];  // FIXME: hard coding shcha
-    BurstType grfB[8];
+    BurstType grfB[8];  // use as subarray block, too
     BurstType mOut;
     BurstType aOut;
 
@@ -44,7 +44,10 @@ class PIMBlock
     void mac(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst);
     void mul(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst);
     void mad(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst, BurstType& src2Bst);
-
+    void div(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst);
+    void burstmax(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst);
+    void reducesum(BurstType& dstBst);
+    void ldexpf(BurstType& dstBst, BurstType& src0Bst);
     std::string print();
 
   private:

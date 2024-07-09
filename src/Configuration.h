@@ -37,6 +37,7 @@ class Configuration
         NUM_COLS = getConfigParam(UINT, "NUM_COLS");
         NUM_CHANS = getConfigParam(UINT, "NUM_CHANS");
         NUM_PIM_BLOCKS = getConfigParam(UINT, "NUM_PIM_BLOCKS");
+        NUM_S_BLOCKS = getConfigParam(UINT, "NUM_S_BLOCKS");
         NUM_RANKS = getConfigParam(UINT, "NUM_RANKS");
         NUM_ROWS = getConfigParam(UINT, "NUM_ROWS");
         RL = getConfigParam(UINT, "RL");
@@ -45,6 +46,7 @@ class Configuration
         tCK = getConfigParam(FLOAT, "tCK");
         tCMD = getConfigParam(UINT, "tCMD");
         tCKE = getConfigParam(UINT, "tCKE");
+        tRA = getConfigParam(UINT, "tRA");
         tRAS = getConfigParam(UINT, "tRAS");
         tRC = getConfigParam(UINT, "tRC");
         tRCDRD = getConfigParam(UINT, "tRCDRD");
@@ -59,9 +61,14 @@ class Configuration
         tRTPL = getConfigParam(UINT, "tRTPL");
         tRTPS = getConfigParam(UINT, "tRTPS");
         tRTRS = getConfigParam(UINT, "tRTRS");
+        tCWL = getConfigParam(UINT, "tCWL");
+        tRTW = getConfigParam(UINT, "tRTW");
+        tWA = getConfigParam(UINT, "tWA");
         tWR = getConfigParam(UINT, "tWR");
         tWTRL = getConfigParam(UINT, "tWTRL");
         tWTRS = getConfigParam(UINT, "tWTRS");
+        tWTR = getConfigParam(UINT, "tWTR");
+        tWTP = getConfigParam(UINT, "tWTP");
         tXP = getConfigParam(UINT, "tXP");
         TOTAL_ROW_ACCESSES = getConfigParam(UINT, "TOTAL_ROW_ACCESSES");
         TRANS_QUEUE_DEPTH = getConfigParam(UINT, "TRANS_QUEUE_DEPTH");
@@ -90,10 +97,6 @@ class Configuration
         {
             throw invalid_argument("Not allowed zero channel");
         }
-
-        PIM_REG_RA = 0x3fff;
-        PIM_ABMR_RA = 0x27ff;
-        PIM_SBMR_RA = 0x2fff;
 
         setDebugConfiguration();
         setOutputConfiguration();
@@ -132,8 +135,10 @@ class Configuration
     unsigned JEDEC_DATA_BUS_BITS;
     unsigned NUM_BANKS;
     unsigned NUM_COLS;
+    unsigned NUM_SUBARRAYS;
     unsigned NUM_CHANS;
     unsigned NUM_PIM_BLOCKS;
+    unsigned NUM_S_BLOCKS;
     unsigned NUM_RANKS;
     unsigned NUM_ROWS;
     unsigned RL;
@@ -142,6 +147,8 @@ class Configuration
     float tCK;
     unsigned tCMD;
     unsigned tCKE;
+    unsigned tCWL;
+    unsigned tRA;
     unsigned tRAS;
     unsigned tRC;
     unsigned tRCDRD;
@@ -153,12 +160,16 @@ class Configuration
     unsigned tRRDL;
     unsigned tRRDS;
     unsigned tRTP;
+    unsigned tRTW;
     unsigned tRTPL;
     unsigned tRTPS;
     unsigned tRTRS;
+    unsigned tWA;
     unsigned tWR;
+    unsigned tWTR;
     unsigned tWTRL;
     unsigned tWTRS;
+    unsigned tWTP;
     unsigned tXP;
     unsigned TOTAL_ROW_ACCESSES;
     unsigned TRANS_QUEUE_DEPTH;
@@ -182,10 +193,6 @@ class Configuration
     unsigned WRITE_TO_READ_DELAY_B_LONG;
     unsigned WRITE_TO_READ_DELAY_B_SHORT;
     unsigned WRITE_TO_READ_DELAY_R;
-
-    uint32_t PIM_REG_RA;
-    uint32_t PIM_ABMR_RA;
-    uint32_t PIM_SBMR_RA;
 
     AddrMapping& addrMapping;
 };

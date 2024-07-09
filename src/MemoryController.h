@@ -56,13 +56,15 @@ class MemoryController : public SimulatorObject
   public:
     // functions
     MemoryController(MemorySystem* ms, CSVWriter& csvOut_, ostream& simLog, Configuration& config);
+    MemoryController(MemorySystem* ms, CSVWriter& csvOut_, ostream& simLog, Configuration& config,
+                     bool is_salp);
     virtual ~MemoryController();
 
     bool addTransaction(Transaction* trans);
     void returnReadData(const Transaction* trans);
     void receiveFromBus(BusPacket* bpacket);
     void attachRanks(vector<Rank*>* ranks);
-    void update();
+    void update(); //bool is_salp_?
     void printDebugOnUpate();
     void printStats(bool finalStats = false);
     void resetStats();
@@ -73,9 +75,11 @@ class MemoryController : public SimulatorObject
     vector<Transaction*> transactionQueue;
 
   private:
+    bool is_salp_;
     ostream& dramsimLog;
     vector<vector<BankState>> bankStates;
-
+    //if subarray mode howabout use bankstates to 3d array?
+    vector<vector<BankState>> bankStates_SUB;
     // functions
     void insertHistogram(unsigned latencyValue, unsigned rank, unsigned bank);
     void updateCommandQueue(BusPacket* poppedBusPacket);
@@ -83,14 +87,17 @@ class MemoryController : public SimulatorObject
     void updateBankState();
     void updateRefresh();
     void setBankStatesRW(size_t rank, size_t bank, uint64_t nextRead, uint64_t nextWrite);
+    void setBankStatesRW(size_t rank, size_t bank, size_t sub, uint64_t nextRead, uint64_t nextWrite);
     void setBankStates(size_t rank, size_t bank, CurrentBankState currentBankState,
+                       BusPacketType lastCommand, uint64_t stateChangeCountdown, uint64_t nextAct);
+    void setBankStates(size_t rank, size_t bank, size_t sub, CurrentBankState currentBankState,
                        BusPacketType lastCommand, uint64_t stateChangeCountdown, uint64_t nextAct);
 
     // fields
     MemorySystem* parentMemorySystem;
 
     CommandQueue commandQueue;
-    BusPacket* poppedBusPacket;
+    CommandQueue commandQueue_SUB;
     vector<BusPacket*> writeDataToSend;
     vector<unsigned> writeDataCountdown;
     vector<Transaction*> returnTransaction;
@@ -110,7 +117,7 @@ class MemoryController : public SimulatorObject
     vector<uint64_t> grandTotalBankAccesses, totalReadsPerBank, totalWritesPerBank;
     vector<uint64_t> totalReadsPerRank, totalWritesPerRank;
     vector<uint64_t> totalActivatesPerBank, totalActivatesPerRank, totalEpochLatency;
-    unsigned refreshRank, refreshBank;
+    unsigned refreshRank, refreshBank, refreshSubarray;
     vector<unsigned> refreshCountdown, refreshCountdownBank;
     Configuration& config;
     MemoryControllerStats* memoryContStats;
@@ -120,6 +127,7 @@ class MemoryController : public SimulatorObject
     vector<uint64_t> backgroundEnergy, burstEnergy, actpreEnergy, refreshEnergy, aluPIMEnergy,
         readPIMEnergy;
     double totalBandwidth;
+    BusPacket* poppedBusPacket;
 
     uint64_t totalReads, totalWrites;
 };
@@ -136,7 +144,7 @@ class MemoryControllerStats
                           vector<uint64_t>& backgroundE, vector<uint64_t>& burstE,
                           vector<uint64_t>& actpreE, vector<uint64_t>& refreshE,
                           vector<uint64_t>& aluPIME, vector<uint64_t>& readPIME,
-                          vector<Transaction*>& pendingReadTrans)
+                          vector<Transaction*>& pendingReadTrans, bool is_salp_ = false)
         : csvOut(csvOut_),
           dramsimLog(simLog),
           config(configuration),
@@ -155,15 +163,17 @@ class MemoryControllerStats
           refreshEnergy(refreshE),
           aluPIMEnergy(aluPIME),
           readPIMEnergy(readPIME),
-          pendingReadTransactions(pendingReadTrans)
+          pendingReadTransactions(pendingReadTrans),
+          is_salp_(is_salp_)
     {
         parentMemorySystem = parent;
-        totalEpochLatency = vector<uint64_t>(config.NUM_RANKS * config.NUM_BANKS, 0);
+        totalEpochLatency = vector<uint64_t>(config.NUM_RANKS * config.NUM_BANKS * 4, 0);
         resetStats();
     }
 
     void printStats(bool finalStats, unsigned myChannel, uint64_t currentClockCycle);
     void insertHistogram(unsigned latencyValue, unsigned rank, unsigned bank);
+    void insertHistogram(unsigned latencyValue, unsigned rank, unsigned bank, unsigned subarray);
     void resetStats();
 
   private:
@@ -193,6 +203,7 @@ class MemoryControllerStats
     double totalBandwidth;
     map<unsigned, unsigned> latencies;
     vector<uint64_t> totalEpochLatency;
+    bool is_salp_;
 };
 
 }  // namespace DRAMSim

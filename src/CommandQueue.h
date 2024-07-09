@@ -54,56 +54,83 @@ class CommandQueue : public SimulatorObject
     typedef vector<BusPacket*> BusPacket1D;
     typedef vector<BusPacket1D> BusPacket2D;
     typedef vector<BusPacket2D> BusPacket3D;
+    typedef vector<BusPacket3D> BusPacket4D;
 
     // functions
     CommandQueue(vector<vector<BankState>>& states, ostream& dramsimLog);
+    CommandQueue(vector<vector<BankState>>& states, ostream& dramsimLog, bool is_salp);
     virtual ~CommandQueue();
 
     void enqueue(BusPacket* newBusPacket);
-    bool pop(BusPacket** busPacket);
+    void enqueue_sub(BusPacket* newBusPacket);
+    void process_queue();
+    void process_queue_sub();
+    bool pop(BusPacket **busPacket);
+    bool pop_sub(BusPacket** busPacket);
 
     // TODO: rename this...
     bool process_refresh(BusPacket** busPacket);
+    bool process_refresh_sub(BusPacket** busPacket);
     bool process_command(BusPacket** busPacket);
+    bool process_command_sub(BusPacket** busPacket);  
     bool process_precharge(BusPacket** busPacket);
+    bool process_precharge_sub(BusPacket** busPacket);
 
     bool hasRoomFor(unsigned numberToEnqueue, unsigned rank, unsigned bank);
+    bool hasRoomFor(unsigned numberToEnqueue, unsigned rank, unsigned bank, unsigned subarray);
     bool isIssuable(BusPacket* busPacket);
+    bool isIssuable_sub(BusPacket* busPacket);
     bool isEmpty(unsigned rank);
+    bool isEmpty_sub(unsigned rank);
     void needRefresh(unsigned rank);
 
     void print();
     void update();  // SimulatorObject requirement
     vector<BusPacket*>& getCommandQueue(unsigned rank, unsigned bank);
+    vector<BusPacket*>& getCommandQueue(unsigned rank, unsigned bank, unsigned sub);
 
     // fields
     BusPacket3D queues;  // 3D array of BusPacket pointers
+    BusPacket4D queues_sub;
     vector<vector<BankState>>& bankStates;
+    vector<vector<BankState>>& bankStates_sub;
     vector<Rank*>* ranks;
+
+    vector<vector<BankState>> emptyBankStates;
+    vector<vector<BankState>> emptyBankStatesSub;
 
   private:
     void nextRankAndBank(unsigned& rank, unsigned& bank);
+    void nextRankAndBankandSubarray(unsigned& rank, unsigned& bank, unsigned& sub);
     // fields
 
     unsigned nextBank;
     unsigned nextRank;
+    unsigned nextSub; //clearly need cause.. in 
 
     unsigned nextBankPRE;
     unsigned nextRankPRE;
+    unsigned nextSubPRE;
 
     unsigned refreshRank;
     unsigned refreshBank;
+    unsigned refreshSub;
 
     bool refreshWaiting;
-
+    
+    vector<unsigned> commandCounters;
+    vector<bool> processedCommands;
     vector<vector<unsigned>> tXAWCountdown;
     vector<vector<unsigned>> rowAccessCounters;
+    vector<vector<vector<unsigned>>> rowAccessCounters_sub;
 
     bool sendAct;
+    bool is_salp_;
 
     // preloaded system configuration parameters
     unsigned num_ranks_;
     unsigned num_banks_;
+    unsigned num_subarrays_;
     unsigned cmd_queue_depth_;
     unsigned xaw_;
     unsigned total_row_accesses_;

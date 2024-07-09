@@ -10,15 +10,14 @@
  * only)
  **************************************************************************************************/
 
-#include "PIMBlock.h"
-
 #include <sstream>
 #include <string>
 
+#include "PIMBlock.h"
 #include "PrintMacros.h"
 #include "SystemConfiguration.h"
 #include "half.h"
-
+//PIMBLOCK SEEMS LIKE BANK LEVEL LOGIC
 using namespace DRAMSim;
 
 void PIMBlock::add(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst)
@@ -91,7 +90,7 @@ void PIMBlock::mad(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst, Bu
         for (int i = 0; i < 16; i++)
         {
             dstBst.fp16Data_[i] =
-                src0Bst.fp16Data_[i] * src1Bst.fp16Data_[i] + src2Bst.fp16Data_[i];
+                src0Bst.fp16Data_[i] * src1Bst.fp16Data_[i] + src2Bst.fp16Data_[i]; //put srfA or srfM to src2bst
         }
     }
     else if (pimPrecision_ == FP32)
@@ -104,6 +103,34 @@ void PIMBlock::mad(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst, Bu
     }
     else
         dstBst = src0Bst * src1Bst + src2Bst;
+}
+
+void PIMBlock::burstmax(BurstType& dstBst, BurstType& src0Bst, BurstType& src1Bst)
+{
+    if (pimPrecision_ == FP16)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            dstBst.fp16Data_[i] = (src0Bst.fp16Data_[i] > src1Bst.fp16Data_[i])?src0Bst.fp16Data_[i]:src1Bst.fp16Data_[i];
+        }
+    }
+}
+void PIMBlock::reducesum(BurstType& dstBst)
+{
+    if(pimPrecision_ == FP16)
+    {
+        for (int i = 0; i<16; i++)
+        {
+            dstBst.fp16Data_[0] += dstBst.fp16Data_[i];
+        }
+    }
+    if(pimPrecision_ == FP32)
+    {
+        for (int i = 0; i<8; i++)
+        {
+            dstBst.fp32Data_[0] += dstBst.fp32Data_[i];
+        }
+    }
 }
 
 std::string PIMBlock::print()

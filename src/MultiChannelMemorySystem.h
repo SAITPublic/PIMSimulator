@@ -50,7 +50,7 @@ class MultiChannelMemorySystem : public MemoryObject
 {
   public:
     MultiChannelMemorySystem(const string& dev, const string& sys, const string& pwd,
-                             const string& trc, unsigned megsOfMemory, string* visFilename = NULL);
+                             const string& trc, unsigned megsOfMemory, string* visFilename = NULL, bool is_salp = false);
     virtual ~MultiChannelMemorySystem();
 
     virtual bool addTransaction(Transaction* trans);
@@ -123,6 +123,7 @@ class MultiChannelMemorySystem : public MemoryObject
     double backgroundPower;
     unsigned* numFence;
 
+    bool is_salp_;
     Configuration* configuration;
 };
 }  // namespace DRAMSim

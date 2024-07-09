@@ -22,6 +22,7 @@
 #include "PIMCmd.h"
 #include "Rank.h"
 #include "SimulatorObject.h"
+#include "SBlock.h"
 
 using namespace std;
 using namespace DRAMSim;
@@ -64,10 +65,10 @@ class PIMRank : public SimulatorObject
     ostream& dramsimLog;
     Configuration& config;
     int pimPC_, lastJumpIdx_, numJumpToBeTaken_, lastRepeatIdx_, numRepeatToBeDone_;
-    bool pimOpMode_, toggleEvenBank_, toggleOddBank_, toggleRa13h_, crfExit_;
+    bool pimOpMode_, pimOpMode_single_, toggleEvenBank_, toggleOddBank_, toggleRa12h_, useAllGrf_, crfExit_;
 
   public:
-    PIMRank(ostream& simLog, Configuration& configuration);
+    PIMRank(ostream& simLog, Configuration& configuration, bool is_salp);
     ~PIMRank() {}
 
     void attachRank(Rank* r);
@@ -77,10 +78,13 @@ class PIMRank : public SimulatorObject
     void setRankId(int id);
     void update();
     void readHab(BusPacket* packet);
+    //void readSab(BusPacket* packet); //use single level pim block logic to.... after double bank...
     void writeHab(BusPacket* packet);
+    //void writeSab(BusPacket* packet);
     void doPIM(BusPacket* packet);
     void doPIMBlock(BusPacket* packet, PIMCmd curCmd, int pimblock_id);
     void controlPIM(BusPacket* packet);
+    void controlPIMsub(BusPacket* packet);
     void readOpd(int pb, BurstType& bst, PIMOpdType type, BusPacket* packet, int idx, bool is_auto,
                  bool is_mac);
     void writeOpd(int pb, BurstType& bst, PIMOpdType type, BusPacket* packet, int idx, bool is_auto,
@@ -89,33 +93,34 @@ class PIMRank : public SimulatorObject
 
     union crf_t
     {
-        uint32_t data[32];
+        uint32_t data[32]; //WHICH IS THE TERM OF ..
         BurstType bst[4];
         crf_t()
         {
             memset(data, 0, sizeof(uint32_t) * 32);
         }
-    } crf;
+    } crf; //crt is 32x8x4, 4 burst logic
 
     unsigned inline getGrfIdx(unsigned idx)
     {
-        return idx & 0x7;
+        return idx & 0x7; //get under low 3 bits
+    }
+    unsigned inline getGrfIdxsalp(unsigned idx)
+    {
+        return idx & 0x3;
     }
     unsigned inline getGrfIdxHigh(unsigned r, unsigned c)
     {
         return ((r & 0x1) << 2 | ((c >> 3) & 0x3));
     }
-    unsigned inline isReservedRA(unsigned row)
+    /*unsigned inline getGrfIdxHighsalp(unsigned r, unsigned c)
     {
-        return (row & (1 << 13));
-    }
-    unsigned inline masked2accessibleRA(unsigned row)
-    {
-        return (row & ((1 << 13) - 1));
-    }
-
-    Rank* rank;
-    vector<PIMBlock> pimBlocks;
+        return; //calculate....((r & 0x1) << 2 | ((c >> 3) & 0x3))
+    }*/
+    Rank* rank; 
+    vector<PIMBlock> pimBlocks; 
+    vector<SBlock> sblocks;
+    bool is_salp_;
 };
 }  // namespace DRAMSim
 #endif

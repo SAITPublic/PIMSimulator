@@ -40,6 +40,7 @@
 #include "Configuration.h"
 #include "PIMRank.h"
 #include "SimulatorObject.h"
+//#include "Subarray.h"
 
 using namespace std;
 using namespace DRAMSim;
@@ -52,23 +53,27 @@ class Rank : public SimulatorObject
 {
   private:
     int chanId;
-    int rankId;
+    int rankId; //there is no more than 1 rank...
     ostream& dramsimLog;
     bool isPowerDown;
     Configuration& config;
+    bool is_salp_;
 
   public:
     // functions
     Rank(ostream& simLog, Configuration& configuration);
+    Rank(ostream& simLog, Configuration& configuration, bool is_salp);
     virtual ~Rank();
 
     void receiveFromBus(BusPacket* packet);
     void check(BusPacket* packet);
     void updateState(BusPacket* packet);
-    void sendToBank(BusPacket* packet);
+    void execute(BusPacket* packet);
 
-    void checkBank(BusPacketType type, int bank, int row);
-    void updateBank(BusPacketType type, int bank, int row, bool targetBank, bool targetBankgroup);
+    void checkBank(BusPacketType type, int bank, int row); 
+    void checkBank(BusPacketType type, int bank, int sub, int row);
+    void updateBank(BusPacketType type, int bank, int row, bool targetBank, bool targetBankgroup); //how about use this function to regulate subarray model
+    void updateBank(BusPacketType type, int bank, int sub, int row, bool targetBank, bool targetBankgroup, bool targetSubarray);
     void attachMemoryController(MemoryController* mc);
     int getChanId() const;
     void setChanId(int id);
@@ -77,14 +82,15 @@ class Rank : public SimulatorObject
     void update();
     void powerUp();
     void powerDown();
-
+    int controlsubarray(BusPacket* packet);
+    
     void readSb(BusPacket* packet);
     void writeSb(BusPacket* packet);
 
     // fields
     MemoryController* memoryController;
     BusPacket* outgoingDataPacket;
-    shared_ptr<PIMRank> pimRank;
+    PIMRank* pimRank;
     unsigned dataCyclesLeft;
     bool refreshWaiting;
 
@@ -92,11 +98,15 @@ class Rank : public SimulatorObject
     vector<BusPacket*> readReturnPacket;
     vector<unsigned> readReturnCountdown;
 
+    //vector<vector<Bank>> banks_sub; //which to modify...
     vector<Bank> banks;
+    vector<Bank> banks_sub;
     vector<BankState> bankStates;
+    //vector<vector<BankState>> bankStates_SUB;    
+    vector<BankState> bankStates_SUB;
 
     dramMode mode_;
-    bool abmr1Even_, abmr1Odd_, abmr2Even_, abmr2Odd_, sbmr1_, sbmr2_;
+    bool abmr1Even_, abmr1Odd_, abmr2Even_, abmr2Odd_, sbmr1_, sbmr2_; //single bank/all bank what is mr?
 
     const char* getModeColor()
     {

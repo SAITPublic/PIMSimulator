@@ -28,9 +28,9 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************************/
 
-#include "MemorySystem.h"
-
 #include <unistd.h>
+
+#include "MemorySystem.h"
 
 using namespace std;
 
@@ -41,17 +41,18 @@ namespace DRAMSim
 powerCallBack_t MemorySystem::ReportPower = NULL;
 
 MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter& csvOut_,
-                           ostream& simLog, Configuration& configuration)
+                           ostream& simLog, Configuration& configuration, bool is_salp)
     : dramsimLog(simLog),
       ReturnReadData(NULL),
       WriteDataDone(NULL),
       systemID(id),
       csvOut(csvOut_),
       numOnTheFlyTransactions(0),
-      config(configuration)
+      config(configuration),
+      is_salp_(is_salp)
 {
     currentClockCycle = 0;
-
+    //maybe i need some boolean salp logic to figure whether use subarray level or not
     DEBUG("===== MemorySystem " << systemID << " =====");
 
     // calculate the total storage based on the devices the user selected and the number of
@@ -103,7 +104,7 @@ MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter& cs
         8);
     uint64_t megsOfStoragePerRank = bytePerRank >> 20;
 
-    num_ranks_ = (megsOfMemory / Byte2MB(bytePerRank));
+    num_ranks_ = 1;//(megsOfMemory / Byte2MB(bytePerRank));
 
     // If this is set, effectively override the number of ranks
     if (megsOfMemory != 0)
@@ -129,14 +130,14 @@ MemorySystem::MemorySystem(unsigned id, unsigned int megsOfMemory, CSVWriter& cs
                  << "MB | " << getConfigParam(UINT, "NUM_RANKS") << " Ranks | "
                  << getConfigParam(UINT, "NUM_DEVICES") << " Devices per rank");
 
-    memoryController = new MemoryController(this, csvOut, dramsimLog, config);
+    memoryController = new MemoryController(this, csvOut, dramsimLog, config, is_salp_);
 
     // TODO: change to other vector constructor?
-    ranks = new vector<Rank*>();
+    ranks = new vector<Rank*>();    
 
-    for (size_t i = 0; i < num_ranks_; i++)
+    for (size_t i = 0; i < num_ranks_; i++) //only one rank indeed
     {
-        Rank* r = new Rank(dramsimLog, config);
+        Rank* r = new Rank(dramsimLog, config, is_salp_);
         r->setChanId(systemID);
         r->setRankId(i);
         r->attachMemoryController(memoryController);
@@ -229,23 +230,39 @@ void MemorySystem::printStats(bool finalStats)
 // update the memory systems state
 void MemorySystem::update()
 {
+    if(currentClockCycle % 100 == 0 && systemID == 0)
+        cout<<"MemorySystem::update() and clock is "<<currentClockCycle<<" and trsize is "<<pendingTransactions.size()<<endl;
     // PRINT(" ----------------- Memory System Update ------------------");
-
     // updates the state of each of the objects
     // NOTE - do not change order
-    for (size_t i = 0; i < num_ranks_; i++)
+    //if(systemID==1) cout<<"MemorySystem::update() and clock is "<<currentClockCycle<<" and curstate is "<<(*ranks)[0]->bankStates_SUB[4*4+3].currentBankState<<" and openrow is "<<(*ranks)[0]->bankStates_SUB[4*4+3].openRowAddress<<endl;
+    /*cout<<" [MemorySystem::start] and systemID is"<<systemID<<" and clock is "<<currentClockCycle<<" and banks 0 size is "<<(*ranks)[0]->banks_sub[0].size()<<" and bank 1 size is "<<(*ranks)[0]->banks_sub[1].size()<<" and bank 2 size is "<<(*ranks)[0]->banks_sub[2].size()<<
+    " and bank 3 size is "<<(*ranks)[0]->banks_sub[3].size()<<" and bank 4 size is "<<(*ranks)[0]->banks_sub[4].size()<<" and bank 5 size is "<<(*ranks)[0]->banks_sub[5].size()<<" and bank 6 size is "<<(*ranks)[0]->banks_sub[6].size()<<" and bank 7 size is "<<(*ranks)[0]->banks_sub[7].size()<<
+    " and bank 8 size is "<<(*ranks)[0]->banks_sub[8].size()<<" and bank 9 size is "<<(*ranks)[0]->banks_sub[9].size()<<" and bank 10 size is "<<(*ranks)[0]->banks_sub[10].size()<<" and bank 11 size is "<<(*ranks)[0]->banks_sub[11].size()<<" and bank 12 size is "<<(*ranks)[0]->banks_sub[12].size()<<
+    " and bank 13 size is "<<(*ranks)[0]->banks_sub[13].size()<<" and bank 14 size is "<<(*ranks)[0]->banks_sub[14].size()<<" and bank 15 size is "<<(*ranks)[0]->banks_sub[15].size()<<endl;*/
+    for (size_t i = 0; i < 1; i++)
     {
         (*ranks)[i]->update();
     }
-
+    //if(systemID==1) cout<<"MemorySystem::update() and clock is "<<currentClockCycle<<" and curstate is "<<(*ranks)[0]->bankStates_SUB[4*4+3].currentBankState<<" and openrow is "<<(*ranks)[0]->bankStates_SUB[4*4+3].openRowAddress<<endl;
+    /*cout<<" [MemorySystem::rank::update] and systemID is"<<systemID<<" and clock is "<<currentClockCycle<<" and banks 0 size is "<<(*ranks)[0]->banks_sub[0].size()<<" and bank 1 size is "<<(*ranks)[0]->banks_sub[1].size()<<" and bank 2 size is "<<(*ranks)[0]->banks_sub[2].size()<<
+    " and bank 3 size is "<<(*ranks)[0]->banks_sub[3].size()<<" and bank 4 size is "<<(*ranks)[0]->banks_sub[4].size()<<" and bank 5 size is "<<(*ranks)[0]->banks_sub[5].size()<<" and bank 6 size is "<<(*ranks)[0]->banks_sub[6].size()<<" and bank 7 size is "<<(*ranks)[0]->banks_sub[7].size()<<
+    " and bank 8 size is "<<(*ranks)[0]->banks_sub[8].size()<<" and bank 9 size is "<<(*ranks)[0]->banks_sub[9].size()<<" and bank 10 size is "<<(*ranks)[0]->banks_sub[10].size()<<" and bank 11 size is "<<(*ranks)[0]->banks_sub[11].size()<<" and bank 12 size is "<<(*ranks)[0]->banks_sub[12].size()<<
+    " and bank 13 size is "<<(*ranks)[0]->banks_sub[13].size()<<" and bank 14 size is "<<(*ranks)[0]->banks_sub[14].size()<<" and bank 15 size is "<<(*ranks)[0]->banks_sub[15].size()<<endl;*/
+    //update rank first and doing memeorycontroller update....
     // pendingTransactions will only have stuff in it if MARSS is adding stuff
     if (pendingTransactions.size() > 0 && memoryController->WillAcceptTransaction())
     {
         memoryController->addTransaction(pendingTransactions.front());
         pendingTransactions.pop_front();
+        //if(pendingTransactions.size() < 100)   cout<<"pendingTransactions.size() = "<<pendingTransactions.size() << " and currentclockcycle is "<<currentClockCycle<<endl;
     }
     memoryController->update();
-
+    //if(systemID==1) cout<<"MemorySystem::update() and clock is "<<currentClockCycle<<" and curstate is "<<(*ranks)[0]->bankStates_SUB[4*4+3].currentBankState<<" and openrow is "<<(*ranks)[0]->bankStates_SUB[4*4+3].openRowAddress<<endl;
+    /*cout<<" [MemorySystem::memorycontroller::update] and clock is "<<currentClockCycle<<" and banks 0 size is "<<(*ranks)[0]->banks_sub[0].size()<<" and bank 1 size is "<<(*ranks)[0]->banks_sub[1].size()<<" and bank 2 size is "<<(*ranks)[0]->banks_sub[2].size()<<
+    " and bank 3 size is "<<(*ranks)[0]->banks_sub[3].size()<<" and bank 4 size is "<<(*ranks)[0]->banks_sub[4].size()<<" and bank 5 size is "<<(*ranks)[0]->banks_sub[5].size()<<" and bank 6 size is "<<(*ranks)[0]->banks_sub[6].size()<<" and bank 7 size is "<<(*ranks)[0]->banks_sub[7].size()<<
+    " and bank 8 size is "<<(*ranks)[0]->banks_sub[8].size()<<" and bank 9 size is "<<(*ranks)[0]->banks_sub[9].size()<<" and bank 10 size is "<<(*ranks)[0]->banks_sub[10].size()<<" and bank 11 size is "<<(*ranks)[0]->banks_sub[11].size()<<" and bank 12 size is "<<(*ranks)[0]->banks_sub[12].size()<<
+    " and bank 13 size is "<<(*ranks)[0]->banks_sub[13].size()<<" and bank 14 size is "<<(*ranks)[0]->banks_sub[14].size()<<" and bank 15 size is "<<(*ranks)[0]->banks_sub[15].size()<<endl;*/
     // simply increments the currentClockCycle field for each object
     for (size_t i = 0; i < num_ranks_; i++)
     {
@@ -253,7 +270,11 @@ void MemorySystem::update()
     }
     memoryController->step();
     this->step();
-
+    //if(systemID==1) cout<<"MemorySystem::update() and clock is "<<currentClockCycle<<" and curstate is "<<(*ranks)[0]->bankStates_SUB[4*4+3].currentBankState<<" and openrow is "<<(*ranks)[0]->bankStates_SUB[4*4+3].openRowAddress<<endl;
+    /*cout<<" [MemorySystem::step] and clock is "<<currentClockCycle<<" and banks 0 size is "<<(*ranks)[0]->banks_sub[0].size()<<" and bank 1 size is "<<(*ranks)[0]->banks_sub[1].size()<<" and bank 2 size is "<<(*ranks)[0]->banks_sub[2].size()<<
+    " and bank 3 size is "<<(*ranks)[0]->banks_sub[3].size()<<" and bank 4 size is "<<(*ranks)[0]->banks_sub[4].size()<<" and bank 5 size is "<<(*ranks)[0]->banks_sub[5].size()<<" and bank 6 size is "<<(*ranks)[0]->banks_sub[6].size()<<" and bank 7 size is "<<(*ranks)[0]->banks_sub[7].size()<<
+    " and bank 8 size is "<<(*ranks)[0]->banks_sub[8].size()<<" and bank 9 size is "<<(*ranks)[0]->banks_sub[9].size()<<" and bank 10 size is "<<(*ranks)[0]->banks_sub[10].size()<<" and bank 11 size is "<<(*ranks)[0]->banks_sub[11].size()<<" and bank 12 size is "<<(*ranks)[0]->banks_sub[12].size()<<
+    " and bank 13 size is "<<(*ranks)[0]->banks_sub[13].size()<<" and bank 14 size is "<<(*ranks)[0]->banks_sub[14].size()<<" and bank 15 size is "<<(*ranks)[0]->banks_sub[15].size()<<endl;*/
     // PRINT("\n"); // two new lines
 }
 

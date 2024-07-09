@@ -30,13 +30,13 @@
 
 #include <memory>
 
-#include "Bank.h"
+#include "Subarray.h"
 #include "BusPacket.h"
 
 using namespace std;
 using namespace DRAMSim;
 
-Bank::Bank(ostream& simLog)
+Subarray::Subarray(ostream& simLog)
     : currentState(simLog), rowEntries(getConfigParam(UINT, "NUM_COLS")), dramsimLog(simLog)
 {
     numCols = getConfigParam(UINT, "NUM_COLS");
@@ -59,7 +59,7 @@ Bank::Bank(ostream& simLog)
  *branch and perhaps try to merge that into master
  */
 
-shared_ptr<Bank::DataStruct> Bank::searchForRow(unsigned row, shared_ptr<DataStruct> head)
+shared_ptr<Subarray::DataStruct> Subarray::searchForRow(unsigned row, shared_ptr<DataStruct> head)
 {
     while (head != NULL)
     {
@@ -74,13 +74,13 @@ shared_ptr<Bank::DataStruct> Bank::searchForRow(unsigned row, shared_ptr<DataStr
     // if we get here, didn't find it
     return NULL; 
 }
-
-void Bank::read(BusPacket* busPacket)
+//how about subarray model to array 
+void Subarray::read(BusPacket* busPacket)
 {
-    //cout<<"Bank::read() and busPacket->bank is "<<busPacket->bank<<" and row is "<<busPacket->row<<" and col is " <<busPacket->column<<" and bank's entry is "<<numCols<<endl;
     shared_ptr<DataStruct> rowHeadNode = rowEntries[busPacket->column];
     shared_ptr<DataStruct> foundNode = NULL;
-    if ((foundNode = Bank::searchForRow(busPacket->row, rowHeadNode)) == NULL)
+    cout<<"subarray read"<<" and row is "<<busPacket->row<<" and col is "<<busPacket->column<<endl;
+    if ((foundNode = Subarray::searchForRow(busPacket->row, rowHeadNode)) == NULL)
     {
     }
     else  // found it
@@ -89,51 +89,46 @@ void Bank::read(BusPacket* busPacket)
     }
 }
 //i'd like to use this logic same as subarray....
-void Bank::write(const BusPacket* busPacket)
+void Subarray::write(const BusPacket* busPacket)
 {
     // TODO: move all the error checking to BusPacket so once we have a bus
     // packet,
     //            we know the fields are all legal
+    cout<<"subarray write"<<" and row is "<<busPacket->row<<" and col is "<<busPacket->column<<endl;
     if (busPacket->column >= numCols)
     {
-        //cout<<"== Error - Bus Packet column " << busPacket->column << " out of bounds and num_col is " <<numCols<<endl;
-        //ERROR("== Error - Bus Packet column " << busPacket->column << " out of bounds");
-        //exit(-1);
-        return;
+        ERROR("== Error - Bus Packet column " << busPacket->column << " out of bounds");
+        exit(-1);
     }
-    // head of the list we need to search
-    shared_ptr<DataStruct> rowHeadNode = rowEntries[busPacket->column];
-    shared_ptr<DataStruct> foundNode = NULL;
-    uintptr_t const_addr = 0x55ffffff;
-    uintptr_t addr = reinterpret_cast<uintptr_t>(busPacket->data);
-    //cout<<"busPacket->row: "<<busPacket->row<<" and bank is "<<busPacket->bank<<" and col is "<<busPacket->column<<endl;
-    if(addr>const_addr)
-    {    
-        if ((foundNode = Bank::searchForRow(busPacket->row, rowHeadNode)) == NULL)
-        {
-            // not found
-            shared_ptr<DataStruct> newRowNode = make_shared<DataStruct>();
-            // DataStruct* newRowNode = (DataStruct*)malloc(sizeof(DataStruct));
 
-            // insert at the head for speed
-            // TODO: Optimize this data structure for speedier lookups?
-            newRowNode->row = busPacket->row;
-            if(busPacket->data)
-                newRowNode->data = *(busPacket->data);
-            newRowNode->next = rowHeadNode;
-            rowEntries[busPacket->column] = newRowNode;
-        }
-        else
+    // head of the list we need to search
+    shared_ptr<DataStruct> rowHeadNode = rowEntries[busPacket->column]; //such row groups that contains such column...
+    shared_ptr<DataStruct> foundNode = NULL;
+    if ((foundNode = Subarray::searchForRow(busPacket->row, rowHeadNode)) == NULL) //for certain row, no data 
+    {
+        // not found
+        shared_ptr<DataStruct> newRowNode = make_shared<DataStruct>();
+        // DataStruct* newRowNode = (DataStruct*)malloc(sizeof(DataStruct));
+
+        // insert at the head for speed
+        // TODO: Optimize this data structure for speedier lookups?
+        newRowNode->row = busPacket->row;
+        if (busPacket->data) //not null_bst_
+            newRowNode->data = *(busPacket->data);
+        newRowNode->next = rowHeadNode;
+        rowEntries[busPacket->column] = newRowNode;
+    }
+    else
+    {
+        // found it, just plaster in the new data
+        foundNode->data = *(busPacket->data);
+        if (DEBUG_BANKS)
         {
-            // found it, just plaster in the new data
-            foundNode->data = *(busPacket->data);
-            if (DEBUG_BANKS)
-            {
-                PRINTN(" -- Bank " << busPacket->bank << " writing to physical address 0x" << hex
-                                << busPacket->physicalAddress << dec << ":");
-                busPacket->printData();
-                PRINT("");
-            }
+            PRINTN(" -- Subarray " << busPacket->bank << " writing to physical address 0x" << hex
+                               << busPacket->physicalAddress << dec << ":");
+            busPacket->printData();
+            PRINT("");
         }
     }
 }
+//nothing to change ildan...
